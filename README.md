@@ -173,14 +173,147 @@ Images are taken from different places, and different weather conditions and at 
 #### Data analysis
 
 Analysis on data is performed while seggregating vehicles, pedestrians and cyclists into different classes and mapping them.
+![img1](img1.png)![img2](img2.png)![img3](img3.png)![img4](img4.png)![img5](img5.png)![img6](img6.png)![img7](img7.png)![img8](img8.png)![img9](img9.png)![img10](img10.png)
 
+Further analysis of the dataset shows that most images contain vehicles and pedestrians (majority vehicles), and very few sample images have cyclists in them. The chart below shows a bar plot for the distribution of classes (cars, pedestrians, and cyclists), over a collection of 20000 random images in the dataset.        
+
+![distribution](chart.png)
+
+The chart shows that there is an imbalance in the classes as, most of the object in the images taken are vehicles and the least objects found are cyclits.
+We can see these visulizations in the `Exploratory Data Analysis.ipynb` file.
+
+Below are histogram charts of the distribution of vehicls/cars, pedestrians and, cyclits in 20000
+
+***Distribution of Cars***
+
+![car distribution](cars_dist.png)
+
+Here we observer about out of the 20000 images, above 15000 images have at least 10 vehicles present in them and the also the maximum number of vehicles present in an object is about 67.
+
+***Distribution of Pedestrians***
+
+![pedestrians distribution](peds_dist.png)
+
+Here we observer that about out of the 20000 images, about 5000 images have at least 10 pedestrians present in them. over 10000 images have at least 1 pedestrian.
+
+***Distribution of Cyclits***
+
+![cyclits distribution](cyc_dist.png)
+
+Here we observer there are very few cyclists presnt in images. The msmximum number of cyclits present in an image is just 6 and only about 2400 images have at least 1 cyclit present in them. 
 
 #### Cross validation
+Here are dataset consists of 100 tfrecord files. We split them up into training, validation, and testing sets.  We make a random shuffle of the data and split them up into training, validation, and testing sets. We use a random shuffle of the data before splitting to increases the probability of all classes being present in each split. 
 
-We are using 100 tfrecord files. We first shuffle the data randomly and then split into training,testing and validation sets. The reason for random shuffling is to
-reduce the class imbalance in each sample. The shuffling ensures approximately equal distribution of samples in the training,testing and validation datasets.
+We give our training set 75% of the data, 15% for validation, and the remaining 10% for testing. This splitting is such that we have enough data for training as well as reserve data for test and validation. Since we have just 100 tfrecord files to deal with we need to minimize the test error and overfitting, thus we use 75% of the data for training so that we can have 15% for cross-validation which is a good number in this case.
 
+### Training 
+#### Reference experiment
+I performed the training over a GPU with 8 cores thus I used a batch size of 8 and validation was run along side the training but over the avalable CPU cores. I first of all ran the training and validation based on the configurations without augmentation of the Restnet50 [pretrained model](http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz) and got the folowing results.
 
-In this case, we are using 0.75 : 0.15 as the proportion of training and validation data since we are using only 100 tfrecord samples. This ensures that we have sufficient data for training as well as validation.We are using 10% (0.1) of the sample as the test set to check the error rate and if the model is overfitting.Ideally,overfitting should not be an issue since 75% is under training and rest 10% is for testing.
+![loss](exprt1-loss.JPG)
+training loss
+
+The loss charts as shown in the image above shows that the model is overfitting as the validation loss (in blue) does not generalize well with the training loss (in orange). This is observed as the blue lines are clearly above the orange lines, showing that the error in classifying is high.
+
+![presision](exprt1-precision.JPG)
+Precision
+
+![recall](exprt1-recall.JPG)
+Recall
+
+We observe from the Databoxes_precision and Databoxes_recall charts above that the values  for precision and recall are low and increases slowly as with increasing training steps. 
+
+To conclude, the performance for this algorithm is generally poor and will need some modifications to improve on the model.
+
+#### Improve on the reference
+
+To improve on this model, The next experiment I ran was with augmetation by adding augmentatinos to the data such as, converting the image to gray scale with a probability of 2% (model will perform better when images have a uniform color), setting the contrast of the image with a min_delta of 0.6 and a max_delta of 1.0 (altering the contrast of the image will add more data points to improve training), again, I adjusted the brightness of the image  with a max_delta of 0.3 (we slight increase the brightness since most images are dark). This augmentations are reflected in the pipline configuration file `solution/pipeline_new.config`.
+
+I used the configuration to run the notebook `Explore augmentations.ipynb`. I was able to observer its performance on the following images
+
+![gray scale](grayscale.png)
+Gray scale image
+
+![foggy](foggy.png)
+Foggy weather
+
+![night](night.png)
+Night
+
+![bright](bright.png)
+Bright
+
+![bright](contrast.png)
+High Contrast
+
+We get the the following charts below after training the model with the new augmentations.
+![loss2](exprt2-loss.JPG)
+training loss with augmentation
+
+![presision2](exprt2-precision.JPG)
+Precission with augmemtaion
+
+![recall2](exprt2-recall.JPG)
+recall with augmentation
+
+Generally, the loss of the modified model is lower that of the original model, this shows that it is performing better. Thus to improve on the model further we should train with additional images with varying brightness and contrast and also converting to gray scale is necessary.
+
+![joinned loss](joined_loss.JPG)
+The image above shows the combination of the training/validation loss of the experiment without augmentation (experiment1) and the training/validation loss for the experiment with augmentation. 
+
+Finally, we could improve generally by adding more data that has a reasonable amount of cyclist to pedestrians and vehicles ratio so that the training will not be biased to only vehicle objects. Again it is difficult to recognize distant objects thus this will be a challenge as even the human eye can not recognize objects a mile away. Find model inference video [here](./animation.mp4)
+
+### Running Project
+With the project setup as describedin the ***Environment set up*** section above, 
+
+- 1: navigate to the project root folder from your docker container
+- 2: download an process data:
+```
+python download_process.py --data_dir /home/workspace/data/ --temp_dir /home/backups/
+```
+- 3: run all cells on the `Exploratory Data Analysis.ipynb` notebook.
+- 4: create splits of the data for training, validation, and testing:
+```
+- python create_splits.py --data_dir /home/workspace/data/processed/
+```
+- 5: download download the [pretrained model](http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz) and move it to training/pretrained-models/.
+- 6: Edit [pipeline.config](./pipeline.config) file.:
+```
+python edit_config.py --train_dir /home/workspace/data/processed/train/ --eval_dir /home/workspace/data/processed/val/ --batch_size 8 --checkpoint ./training/pretrained-models/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8/checkpoint/ckpt-0 --label_map label_map.pbtxt
+```
+- 7: Run training for non augmentation pipeline:
+```
+python experiments/model_main_tf2.py --model_dir=training/reference/ --pipeline_config_path=training/reference/pipeline_new.config
+```
+- 8: Run validation on a separate terminal just after launch the training:
+```
+CUDA_VISIBLE_DEVICES="" python experiments/model_main_tf2.py --model_dir=training/reference/ --pipeline_config_path=training/reference/pipeline_new.config --checkpoint_dir=training/reference/
+```
+- 9: while training is going on, launch tensorboard from another terminal:
+```
+tensorboard --logdir=training/reference/ --host 0.0.0.0
+```
+- 10: view tensorboard dashboard from your browser:
+```
+localhost:6006
+```
+- 11: when the training/validation is done, kill the terminals
+- move the data in `training/reference` to `training/reference/experiment1`
+- 12: modify the `pipeline_new.config` cereated in step 6 with more augmentations
+
+![augmented](screenshots/augmentation.JPG)
+- repeat steps 7 and 8
+- 13: move the data in `training/reference` to `training/reference/experiment2` 
+- 14: observe performance on tensorboard
+- 15: save the new model:
+```
+python experiments/exporter_main_v2.py --input_type image_tensor --pipeline_config_path training/experiment2/pipeline_new.config --trained_checkpoint_dir training/reference/experiment2 --output_directory training/reference/experiment2/exported_model/
+```
+- create a video of your model's inferences for any tf record file in the test data directory.
+```
+python inference_video.py --labelmap_path label_map.pbtxt --model_path training/experiment2/exported_model/saved_model --tf_record_path /home/workspace/data/processed/test/segment-10094743350625019937_3420_000_3440_000_with_camera_labels.tfrecord --config_path training/reference/experiment2/pipeline_new.config --output_path animation.mp4
+```
+
 
 
