@@ -172,10 +172,7 @@ Images are taken from different places, and different weather conditions and at 
 
 #### Data analysis
 
-The dataset presents most of the labels being associated with vehicles and pedestrians with the sample size of cyclists being very small. The proportionate amount of the counts of the different labels are in "Exploratory Data Analysis.ipynb" file. There is a class imbalance which can be handled with oversampling techniques. A sample image of the proportional counts of the labels (cars,pedestrians,cyclists) are shown below:
-
-<img src="https://i.imgur.com/8jtDAmz.png">
-
+Analysis on data is performed while seggregating vehicles, pedestrians and cyclists into different classes and mapping them.
 
 
 #### Cross validation
@@ -186,66 +183,4 @@ reduce the class imbalance in each sample. The shuffling ensures approximately e
 
 In this case, we are using 0.75 : 0.15 as the proportion of training and validation data since we are using only 100 tfrecord samples. This ensures that we have sufficient data for training as well as validation.We are using 10% (0.1) of the sample as the test set to check the error rate and if the model is overfitting.Ideally,overfitting should not be an issue since 75% is under training and rest 10% is for testing.
 
-### Training 
-
-#### Reference experiment
-
-The residual network model ([Resnet](http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz)) without augmentation , model loss is shown below:
-
-<img src="https://i.imgur.com/vC9whPX.jpg">
-
-Initially the model was overffiting as the training loss was diverging from the validation loss.The training loss is indicated in orange and the validation loss in blue.This divergence indicates a significant error rate during model validation- an indication that the model is overfitting.
-The precision and recall curves indicate that the performance of the model slowly increases, as both precision and recall start to increase. A high recall rate is often not suitable and the model performance is not that great.
-Precision:
-
-<img src="https://i.imgur.com/z4hSFrv.jpg">
-
-Recall:
-
-<img src="https://i.imgur.com/e3rRSdH.jpg">
-
-
-#### Improve on the reference
-
-To improve on the model performance, the first step was to augment the images by converting them to grayscale with a probability of 0.2. After this, we have clamped the contrast values between 0.6 and 1.0 such that more lighting datapoints are available for classification. A greater part of the images were a bit darker and increasing the brightness to 0.3 provided an even datapoint which could be better classified with the model.The pipeline changes are there in ```pipeline_new.config```
-
-Augmentations applied:
-
-- 0.02 probability of grayscale conversion
-- brightness adjusted to 0.3
-- contrast values between 0.6 and 1.0
-
-Grayscale images:
-
-<img src="https://i.imgur.com/ft9s4xx.png">
-
-Night(Darker) Images:
-
-<img src="https://i.imgur.com/rnhigAX.png">
-
-Contrast Images:
-
-<img src="https://i.imgur.com/pGJiRg3.png">
-
-
-
-The details of the run can be found here : "Explore augmentations.ipynb"
-
-The model loss with augmentation :
-
-<img src="https://i.imgur.com/H4DtUd8.jpg">
-
-Precision with Augmentation:
-
-<img src="https://i.imgur.com/2aGRa93.jpg">
-
-Recall with Augmentation:
-
-<img src="https://i.imgur.com/wtTj62o.jpg">
-
-The loss is lower than the previous loss (un-augmented model). This is an indication of better performance. There should be more samples of augmented datapoints such as
-combining the contrast values with grayscale. Brightness can also be clamped within a limit instead of fixing it to 0.3
-However the most important point is to add more samples of cyclists,pedestrians which are in a low quantity in the dataset. This is an inherent requirement since model biases play an important role in the loss curves and lesser the diversity in training samples, the lower will be the accuracy. 
-
-We have reduced overfitting to an extent with augmentation, however better classification results would be resulting from a more balanced dataset.
 
