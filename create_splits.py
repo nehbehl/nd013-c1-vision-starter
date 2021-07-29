@@ -6,9 +6,7 @@ import random
 import numpy as np
 
 from utils import get_module_logger
-import tensorflow as tf
-from tensorflow.keras.preprocessing import image_dataset_from_directory
-import shutil
+
 
 def split(data_dir):
     """
@@ -19,46 +17,46 @@ def split(data_dir):
         - data_dir [str]: data directory, /mnt/data
     """
     # TODO: Implement function
-    #Get data from filename
-    try:
-        files = [filename for filename in glob.glob(f'{data_dir}/*.tfrecord')]
-    except Exception as err:
-        print("Unable to access file")
-    np.random.shuffle(files)
+    listoffiles = [filename for filename in glob.glob(f'{data_dir}/*.tfrecord')]
     
-    # spliting files
-    train_files, val_file, test_file = np.split(files, [int(.75*len(files)), int(.9*len(files))])
+    np.random.shuffle(listoffiles)
+    
+    # splitting the files
+    training_files, validation_files, testing_files = np.split(listoffiles, [int(.75*len(listoffiles)), int(.9*len(listoffiles))])
     
     # create dirs and move data files into them
-    train = os.path.join(data_dir, 'train')
-    # check if dirs exist and then move the data files in dirs
+    training = os.path.join(data_dir, 'train')
+    
+    # check if directories exist and then move the data files in directories
     try:
-        if os.path.exists(train):
-            os.makedirs(train)
+        if os.path.exists(training):
+            os.makedirs(training)
     except:
-        os.makedirs(train,exist_ok=True)
+        os.makedirs(training,exist_ok=True)
     
-    for file in train_files:
-        shutil.move(file, train)
+    for file in training_files:
+        shutil.move(file, training)
     
-    val = os.path.join(data_dir, 'val')
+    validating = os.path.join(data_dir, 'val')
     
     try:
-        if os.path.exists(val):
-            os.makedirs(val)
+        if os.path.exists(validating):
+            os.makedirs(validating)
     except:
-        os.makedirs(val,exist_ok=True)
+        os.makedirs(validating,exist_ok=True)
     
-    for file in val_file:
-        shutil.move(file, val)
+    for file in validating_files:
+        shutil.move(file, validating)
     
-    test = os.path.join(data_dir, 'test')
-    os.makedirs(test, exist_ok=True)
-    for file in test_file:
-        shutil.move(file, test) 
+    testing = os.path.join(data_dir, 'test')
+    os.makedirs(testing, exist_ok=True)
+    
+    for file in testing_files:
+        shutil.move(file, testing) 
+    
 
 if __name__ == "__main__": 
-    parser = argparse.ArgumentParser(description='Split data into training / validation / testing')
+    parser = argparse.ArgumentParser(description='Splitting data into training / validation / testing')
     parser.add_argument('--data_dir', required=True,
                         help='data directory')
     args = parser.parse_args()
